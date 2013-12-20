@@ -1,0 +1,143 @@
+#!/usr/local/apache2/php/bin/php -q
+
+<?php
+Spider($argv[1]);
+// --------------------------------------------------------------------------------------------------------------------------------->
+function MonthlyStats($Month,$Year,$VhostLog) {
+ $Hits = 0;
+ $LogRow = explode("\r\n",$VhostLog);
+	foreach ($LogRow as $LogEntry) {
+	   list($ThisIP, $ThisMonth, , $ThisYear, , $ThisByte) = explode(",",$LogEntry);
+		 $MonthMatch = strpos($ThisMonth,$Month);
+		 if ($MonthMatch === false) {
+		 } else {
+			 $YearMatch = strpos($ThisYear,$Year);
+			 if ($YearMatch === false) {
+			 } else {
+			   $Hits++;
+			   if ($ThisByte != "-") { $TotalBytes = ($TotalBytes + $ThisByte); }
+			   $ArrIP = explode(",",$IP_List);
+			   if (count($ArrIP) > 0) {
+				 foreach ($ArrIP as $UniqueIP) {
+					 if (strcmp($ThisIP,$UniqueIP)) {
+						if (UniqueElement($IP_List,$ThisIP) == 1) {
+						 $IP_List .= "," . $ThisIP;
+						} 
+					 } else { /* Go to the next element in the array */ } 
+				  }
+				} else {
+				  $IP_List = $ThisIP;
+				} 
+			   $TotalUniqueVisitors = (count($ArrIP) -1);
+			 } // Ends Month Match
+		 } // Ends Year Match
+     }
+	 return $TotalBytes . "," . $Hits .  "," . $TotalUniqueVisitors;
+}
+// ---------------------------------------------------------------------------------------------------------------------->
+function UniqueElement($Array,$Key) {
+$IPs = explode(",",$Array);
+  for ($i=0; $i < count($IPs); $i++) {
+     if (strcmp($IPs[$i],$Key) == 0 || $Key == "") {
+		$Unique .= "0";
+	 } else {
+	    $Unique .= "1";
+     }
+  }
+$Elements = strpos($Unique,"0");
+  if ($Elements === false) { 
+    return true; 
+  } else {
+    return false;
+  }
+}
+// ---------------------------------------------------------------------------------------------------------------------->
+function Spider($Dir) {
+$AccessLog = "access_log";
+$SpiderLog = "spider_log";
+if (!$Dir) { print "No directory specified. Please specify " . $argv[0] . " /path/to/dir\n"; exit(); }
+
+  if(is_dir($Dir)) {
+   $Dir_Handle=opendir($Dir); 
+     while($file=readdir($Dir_Handle)) {
+        if($file!="." && $file!="..") {
+			$exists = strpos($file,$AccessLog);
+            if ($exists === false) { $DoFile = 0; } else { $DoFile = 1; }
+	        if(!is_dir($Dir."/".$file) && $DoFile == 1) {
+                 $ThisLog = $Dir . "/" . $file;
+				 $ParentFolder ++;				 
+				 // VERBOSE OUTPUT HERE IF DESIRED //
+				 if ($ParentFolder > 1) { 				 
+					  $LogHandle = fopen($ThisLog,"r");
+				       while ($ThisRow = fgets($LogHandle,1024)) {
+							list($RemoteAddr, , ,$Date, , , , ,$StatusCode,$ByteSize) = explode(" ",$ThisRow);
+								list($Day, $Month, $Year) = explode("/", str_replace("[", "", $Date),3);
+								list( ,$RequestLine, ,$Referrer, , $UserAgent) = explode("\"",$ThisRow);
+								  $strRequestLine = str_replace("\"","",$RequestLine);
+								  $strReferrer = str_replace("\"","",$Referrer);
+								  $strUserAgent = str_replace("\"","",$UserAgent);
+								  $ThisRow = $RemoteAddr . "," . $Month . "," . $Day . "," . substr($Year,0,4) . "," . 
+											 $StatusCode . "," . $ByteSize . "," . $strRequestLine . "," . $strReferrer . "," . 
+											 $strUserAgent . "\r\n";
+								  $CSV_Format .= $ThisRow;
+				       }
+					  fclose($LogHandle);					 
+					          unset($Dates);
+					          unset($ArrDates);
+   		                      $Dates = "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec";
+						      $ArrDates = explode(",",$Dates);
+						      foreach ($ArrDates as $ThisMonth) {		
+								list($BandwidthUsage, $TotalHits, $UniqueVisitors) = explode(",",MonthlyStats($ThisMonth,date("Y"),$CSV_Format));								
+								$i++;							   
+							    $ArrTotal[$i] = array(1 => $ThisMonth , substr($Year,0,4), $BandwidthUsage, $TotalHits, $UniqueVisitors );
+							  }						  
+							     $spider_log = fopen($Dir . "/" . $SpiderLog,"w");
+								 $IndexPoint = (count($ArrTotal)-11);
+								 for ($s=$IndexPoint; $s < count($ArrTotal)+1; $s++) {
+								     fwrite($spider_log,$ArrTotal[$s][1] . "," . $ArrTotal[$s][2] . "," . $ArrTotal[$s][3] . "," . $ArrTotal[$s][4] . "," . $ArrTotal[$s][5] . "\n"); 
+							     }
+							    fclose($spider_log);
+								chmod($Dir . "/" . $SpiderLog, 0777);								
+							   /*
+	                            $Conn = mysql_connect("localhost", "pgpl", "password");
+								mysql_select_db("GPL_HOSTING",$Conn);
+								mysql_query("INSERT INTO HTTP_Logfiles(Username,SysData) VALUES('jeremy','" . $SysData . "')");
+	                           */		
+			  }  else { 
+			             $LogHandle = fopen($ThisLog,"r");
+				           while ($ThisRow = fgets($LogHandle,1024)) {
+							list($RemoteAddr, , ,$Date, , , , ,$StatusCode,$ByteSize) = explode(" ",$ThisRow);
+								list($Day, $Month, $Year) = explode("/", str_replace("[", "", $Date),3);
+								list( ,$RequestLine, ,$Referrer, , $UserAgent) = explode("\"",$ThisRow);
+								  $strRequestLine = str_replace("\"","",$RequestLine);
+								  $strReferrer = str_replace("\"","",$Referrer);
+								  $strUserAgent = str_replace("\"","",$UserAgent);
+								  $ThisRow = $RemoteAddr . "," . $Month . "," . $Day . "," . substr($Year,0,4) . "," . 
+											 $StatusCode . "," . $ByteSize . "," . $strRequestLine . "," . $strReferrer . "," . 
+											 $strUserAgent . "\r\n";
+								  $CSV_Format .= $ThisRow;  
+				           }
+					      fclose($LogHandle);					 
+					          unset($Dates);
+					          unset($ArrDates); 						 
+   		                      $Dates = "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec";
+						      $ArrDates = explode(",",$Dates);
+						      foreach ($ArrDates as $ThisMonth) {		
+								list($BandwidthUsage, $TotalHits, $UniqueVisitors) = explode(",",MonthlyStats($ThisMonth,date("Y"),$CSV_Format));
+								$SysData .= $ThisMonth . "," . substr($Year,0,4) . "," . $BandwidthUsage . "," . $TotalHits . "," . $UniqueVisitors . "\n";    
+								
+			                    $spider_log = fopen($Dir . "/" . $SpiderLog,"w");
+								     fwrite($spider_log,trim($SysData) . "\n"); 
+							     }
+							    fclose($spider_log);
+								chmod($Dir . "/" . $SpiderLog, 0777);
+			  }                      						    
+		   }
+           else Spider($Dir."/".$file); 
+         }
+     } 
+   closedir($Dir_Handle);
+  }
+}
+// ------------------------------------------------------------------------------------------------------------------------------------>
+?>

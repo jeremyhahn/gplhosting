@@ -1,0 +1,40 @@
+.BodyHeader { 
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size:14px;
+font-weight:bold;
+}
+.menu { 
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size:10px;
+}
+a { text-decoration:none; }
+a:active { text-decoration:underline; }
+a:hover { text-decoration:underline; }
+.style1 {font-size: 9px}
+.style2 {color: #FF0000}
+.highlight { color:#666699; }
+.SetColor {
+    color:#000000;
+}
+.CustomTable {
+    border-color:#666699;
+	border-width:thin;
+	font-size: 10px;
+}
+.TableHeader {
+	font-family: Geneva, Arial, Helvetica, Verdana;
+	font-size: 14px;
+	font-weight:bold;
+}
+.TableRow {
+    background-color:#FFFFFF;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #000000;
+}
+.TableRow2 {
+    background-color:#F9F9F9;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #000000;
+}
